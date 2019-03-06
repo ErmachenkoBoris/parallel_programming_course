@@ -20,8 +20,7 @@ double** FilterGauss(double** arrImage, double** new_arrImage, int width, int he
     double koef3;
     double color;
     double** w = getNewArr(n, n);
-    for (int i = 0; i < n; i++)
-    {
+    for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++)
         {
             koef3 = (i*i + j * j) / koef2;
@@ -38,15 +37,11 @@ double** FilterGauss(double** arrImage, double** new_arrImage, int width, int he
             new_arrImage[i][j] = arrImage[i][j];
         }
     }
-    for (int yi = n; yi < height - n; yi++)
-    {
-        for (int xj = n; xj < width - n; xj++)
-        {
-            for (int i = 0; i < n; i++)
-            {
+    for (int yi = n; yi < height - n; yi++) {
+        for (int xj = n; xj < width - n; xj++) {
+            for (int i = 0; i < n; i++) {
                 color = 0;
-                for (int j = 0; j < n; j++)
-                {
+                for (int j = 0; j < n; j++) {
                     color += w[i][j] * arrImage[static_cast<int>(i + yi)][static_cast<int>(j + xj)];
                 }
             }
