@@ -4,8 +4,8 @@
 #include <iostream>
 // #pragma comment(linker, "/STACK:8000000")
 // #pragma comment(linker, "/HEAP:8000000")
-const int PI = 3.1415;
-double**& getNewArr(int width, int height) {
+const double PI = 3.1415;
+double** getNewArr(int width, int height) {
     double** new_arrImage = new double*[height];
     for (int i = 0; i < height; i++) {
         new_arrImage[i] = new double[width];
@@ -13,7 +13,7 @@ double**& getNewArr(int width, int height) {
     return new_arrImage;
 }
 double** FilterGauss(double** arrImage, double** new_arrImage, int width, int height) {
-    double sum = 0;
+    // double sum = 0;
     double koef1 = 1.398;
     double koef2 = 2 * koef1*koef1;
     int n = 3;
