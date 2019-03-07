@@ -2,6 +2,7 @@
 #include <math.h>
 #include <ctime>
 #include <iostream>
+// 1
 const double PI = 3.1415;
 double** getNewArr(int width, int height) {
     double** new_arrImage = new double*[height];
