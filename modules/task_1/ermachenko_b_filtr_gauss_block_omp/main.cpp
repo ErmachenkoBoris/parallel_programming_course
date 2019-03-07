@@ -1,7 +1,8 @@
 // Copyright 2019 Ermachenko Boris
 #include <math.h>
 #include <ctime>
-#include<iostream>
+#include <iostream>
+#include <stdlib.h>
 // #pragma comment(linker, "/STACK:8000000")
 // #pragma comment(linker, "/HEAP:8000000")
 const int PI = 3.1415;
@@ -55,7 +56,7 @@ double** getImage(int width, int height) {
     double** arrImage = getNewArr(width, height);
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            arrImage[i][j] = static_cast<int>(rand_r()) % 256;
+            arrImage[i][j] = static_cast<int>(std::rand()) % 256;
         }
     }
     return arrImage;
@@ -72,8 +73,8 @@ void ShowArr(double** arr, int width, int height) {
     }
 }
 int main() {
-    int height = 800;
-    int width = 400;
+    int height = 20;
+    int width = 10;
     double** arrImage = getImage(width, height);
     double** new_arrImage = getNewArr(width, height);
     new_arrImage = FilterGauss(arrImage, new_arrImage, width, height);
