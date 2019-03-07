@@ -2,7 +2,6 @@
 #include <math.h>
 #include <ctime>
 #include <iostream>
-#include <stdlib.h>
 // #pragma comment(linker, "/STACK:8000000")
 // #pragma comment(linker, "/HEAP:8000000")
 const int PI = 3.1415;
