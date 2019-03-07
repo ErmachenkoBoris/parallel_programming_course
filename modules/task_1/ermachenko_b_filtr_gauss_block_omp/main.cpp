@@ -2,7 +2,6 @@
 #include <math.h>
 #include <ctime>
 #include <iostream>
-// #pragma comment(linker, "/STACK:8000000")
 // #pragma comment(linker, "/HEAP:8000000")
 const double PI = 3.1415;
 double** getNewArr(int width, int height) {
