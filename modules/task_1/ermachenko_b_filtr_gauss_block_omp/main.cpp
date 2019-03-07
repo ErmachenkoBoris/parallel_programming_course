@@ -51,7 +51,7 @@ double** FilterGauss(double** arrImage, double** new_arrImage, int width, int he
 }
 
 double** getImage(int width, int height) {
-    srand((unsignet int)time(0));
+    srand((unsigned int)time(0)); 
     double** arrImage = getNewArr(width, height);
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
