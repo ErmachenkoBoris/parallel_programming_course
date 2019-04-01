@@ -18,13 +18,11 @@ double** getNewArr(int width, int height) {
 }
 double** LinierFilterGauss(double** arrImage, double** new_arrImage,
     int width, int height) {
-    double koef1 = 1.398;
     int n = 3;
     double** w = getNewArr(n, n);
     double sigma = 1.0;
     double r;
     double s = 2.0 * sigma * sigma;
-    int rad = n / 2;
     for (int i = -n / 2; i < n / 2; i++) {
         for (int j = -n / 2; j < n / 2; j++) {
             r = sqrt(i * i + j * j);
@@ -101,13 +99,11 @@ int * arrayLengthBlocksY(int height) {
 }
 double** ParallelFilterGauss(double** arrImage,
     double** new_arrImage, int width, int height) {
-    double koef1 = 1.398;
     int n = 3;
     double** w = getNewArr(n, n);
     double sigma = 1.0;
     double r;
     double s = 2.0 * sigma * sigma;
-    int rad = n / 2;
     for (int i = -n / 2; i < n / 2; i++) {
         for (int j = -n / 2; j < n / 2; j++) {
             r = sqrt(i * i + j * j);
