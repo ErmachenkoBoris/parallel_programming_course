@@ -204,7 +204,6 @@ int main() {
     printf("Time parallel :  %.4lf \n", tEnd - tStart);
     // ShowArr(arrImage, width, height);
     // ShowArr(new_arrImage_Liner, width, height);
-    // printf("---------------- \n");
     // ShowArr(new_arrImage_Parallel, width, height);
     return 0;
 }
