@@ -2,8 +2,8 @@
 // #pragma comment(linker, "/STACK:8000000")
 // #pragma comment(linker, "/HEAP:8000000")
 #include <math.h>
-#include <iostream>
 #include <omp.h>
+#include <iostream>
 #include <ctime>
 #define THREADS 7
 const double PI = 3.1415;
@@ -18,17 +18,13 @@ double** getNewArr(int width, int height) {
 }
 double** LinierFilterGauss(double** arrImage, double** new_arrImage,
     int width, int height) {
-    double sum = 0;
     double koef1 = 1.398;
-    double koef2 = 2 * koef1*koef1;
     int n = 3;
     double** w = getNewArr(n, n);
     double sigma = 1.0;
     double r;
     double s = 2.0 * sigma * sigma;
     int rad = n / 2;
-    double* result = new double[n*n];
-    double coeff1 = 1 / (2 * 3.14159265 * rad * rad);
     for (int i = -n / 2; i < n / 2; i++) {
         for (int j = -n / 2; j < n / 2; j++) {
             r = sqrt(i * i + j * j);
@@ -57,7 +53,7 @@ double** LinierFilterGauss(double** arrImage, double** new_arrImage,
             color /= kSum;
             if (color < 0) color = 0;
             if (color > 255) color = 255;
-            if ((yi) >= 0 && (yi)<height && (xj) >= 0 && (xj)<width)
+            if ((yi) >= 0 && (yi) < height && (xj) >= 0 && (xj) < width)
             new_arrImage[static_cast<int>(yi)][static_cast<int>(xj)] = color;
         }
     }
@@ -105,17 +101,13 @@ int * arrayLengthBlocksY(int height) {
 }
 double** ParallelFilterGauss(double** arrImage,
     double** new_arrImage, int width, int height) {
-    double sum = 0;
     double koef1 = 1.398;
-    double koef2 = 2 * koef1*koef1;
     int n = 3;
     double** w = getNewArr(n, n);
     double sigma = 1.0;
     double r;
     double s = 2.0 * sigma * sigma;
     int rad = n / 2;
-    double* result = new double[n*n];
-    double coeff1 = 1 / (2 * 3.14159265 * rad * rad);
     for (int i = -n / 2; i < n / 2; i++) {
         for (int j = -n / 2; j < n / 2; j++) {
             r = sqrt(i * i + j * j);
@@ -135,8 +127,6 @@ double** ParallelFilterGauss(double** arrImage,
         int numberThroat = omp_get_thread_num();
         int startX = 0;
         int startY = 0;
-        int RestX = 0;
-        int RestY = 0;
         int row = 0;
         int column = 0;
         int count = 0;
@@ -202,8 +192,6 @@ int main() {
     double tStart, tEnd;
     int height = 10;
     int width = 20;
-    int nthreads = 0;
-    int tid = 0;
     double** arrImage = getImage(width, height);
     double** new_arrImage_Liner = getNewArr(width, height);
     omp_set_num_threads(THREADS);
