@@ -176,7 +176,10 @@ int main(int argc, char *argv[]) {
 
         int hullSize = grahamScan(localData);
         for (int i = 0; i < hullSize; i++) {
-            result->push_back(localData->at(i));
+            #pragma omp critical
+            {
+                result->push_back(localData->at(i));
+            }
         }
         #pragma omp barrier
         #pragma omp single
@@ -188,11 +191,11 @@ int main(int argc, char *argv[]) {
                      << result->at(i).y << " ) ";
             }
         }
-        localData->clear();
+        std::vector<point>().swap(*localData);
     }
     t2 = omp_get_wtime();
     dt = t2 - t1;
     std::cout << std::endl << "parallel time: " << dt << std::endl;
-    data->clear();
+    std::vector<point>().swap(*data);
 }
 

@@ -1,6 +1,6 @@
 // Copyright Kiselev Denis 2019
 
-#include <omp.h>
+#include <tbb/tbb.h>
 
 #include <cfloat>
 #include <functional>
@@ -71,19 +71,22 @@ double integrateByMonteCarloParallel(
         distrs.emplace_back(limits[i].first, limits[i].second);
     }
 
-    int nPointsInEllipsoid = 0;
-    #pragma omp parallel reduction(+: nPointsInEllipsoid)
-    {
-        std::vector<double> args(dimension);
-        std::default_random_engine generator(omp_get_thread_num());
-        #pragma omp for schedule(static)
-        for (int i = 0; i < nPoints; i++) {
-            for (int j = 0; j < dimension; j++)
-                args[j] = distrs[j](generator);
-            double value = func(args);
-            if (value <= 0) nPointsInEllipsoid++;
-        }
-    }
+    int nPointsInEllipsoid = tbb::parallel_reduce(
+        tbb::blocked_range<size_t>(0, nPoints), 0,
+        [&] (const tbb::blocked_range<size_t>& r, int anotherValue) -> int {
+            int nPointsInEllipsoid = anotherValue;
+            std::vector<double> args(dimension);
+            size_t begin = r.begin(), end = r.end();
+            std::default_random_engine generator(begin);
+            for (size_t i = begin; i != end; i++) {
+                for (int j = 0; j < dimension; j++)
+                    args[j] = distrs[j](generator);
+                double value = func(args);
+                if (value <= 0) nPointsInEllipsoid++;
+            }
+            return nPointsInEllipsoid;
+        },
+        std::plus<int>());
 
     double hitProbability = static_cast<double>(nPointsInEllipsoid) / nPoints;
     return measure * hitProbability;
@@ -93,16 +96,16 @@ int main(int argc, char *argv[]) {
     int nPoints = (argc > 1) ? atoi(argv[1]) : DEFAULT_NPOINTS;
 
     // Sequential
-    double t1 = omp_get_wtime();
+    tbb::tick_count t1 = tbb::tick_count::now();
     double seqResult = integrateByMonteCarlo(
         ellipsoid, { { X1, X2 }, { Y1, Y2 }, { Z1, Z2 } }, nPoints);
-    double seqTime = omp_get_wtime() - t1;
+    double seqTime = (tbb::tick_count::now() - t1).seconds();
 
     // Parallel
-    t1 = omp_get_wtime();
+    t1 = tbb::tick_count::now();
     double parResult = integrateByMonteCarloParallel(
         ellipsoid, { { X1, X2 }, { Y1, Y2 }, { Z1, Z2 } }, nPoints);
-    double parTime = omp_get_wtime() - t1;
+    double parTime = (tbb::tick_count::now() - t1).seconds();
 
     double realRes = 4.0 / 3.0 * std::acos(-1) * ELLPS_A * ELLPS_B * ELLPS_C;
     double speedUp = seqTime / parTime;

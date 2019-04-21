@@ -1,8 +1,9 @@
 #define _SCL_SECURE_NO_WARNINGS
 // Copyright 2019 Nifadyev Vadim
-#include <omp.h>
+#include <tbb/tbb.h>
 #include <algorithm>
 #include <ctime>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <utility>
@@ -18,7 +19,7 @@ bool isCorrectlySorted(int* linear_sorted_array, int* parallel_sorted_array,
 
 int main(int argc, char** argv) {
     int SIZE = 10000;
-    int THREADS = omp_get_max_threads();
+    int THREADS = 4;
 
     // Read `SIZE` and `THREADS` from console if they are presented
     if (argc == 2) {
@@ -37,35 +38,36 @@ int main(int argc, char** argv) {
     std::copy(array, array + SIZE, linear_sorted_array);
     std::copy(array, array + SIZE, stl_sorted_array);
 
-    double start_time = omp_get_wtime();
-    parallelQuickSort(array, SIZE, THREADS);
-    double finish_time = omp_get_wtime();
-    double parallel_time = finish_time - start_time;
+    if (SIZE < 50) {
+        std::cout << "Initial array: ";
+        printArray(array, SIZE);
+    }
 
-    start_time = omp_get_wtime();
+    tbb::tick_count start_time = tbb::tick_count::now();
+    parallelQuickSort(array, SIZE, THREADS);
+    tbb::tick_count finish_time = tbb::tick_count::now();
+    double parallel_time = (finish_time - start_time).seconds();
+
+    start_time = tbb::tick_count::now();
 
     quickSort(linear_sorted_array, 0, SIZE - 1);
-    finish_time = omp_get_wtime();
-    double linear_time = finish_time - start_time;
+    finish_time = tbb::tick_count::now();
+    double linear_time = (finish_time - start_time).seconds();
 
-    // Sort array using stl qsort to check custom quickSort algorithms
-    qsort(stl_sorted_array, SIZE, sizeof(int),
-          [](const void* a, const void* b) {
-              return (*reinterpret_cast<const int*>(a) -
-                      *reinterpret_cast<const int*>(b));
-          });
+    // Sort array using tbb sort to check custom quickSort algorithms
+    tbb::parallel_sort(stl_sorted_array, stl_sorted_array + SIZE,
+                       std::less<int>());
 
     if (isCorrectlySorted(stl_sorted_array, array, SIZE) &&
         isCorrectlySorted(stl_sorted_array, linear_sorted_array, SIZE)) {
         if (SIZE < 50) {
-            std::cout << "Initial array: ";
-            printArray(array, SIZE);
             std::cout << "Sorted array:  ";
             printArray(array, SIZE);
         }
     } else {
         std::cout << "Quick sort failed. Array is not sorted" << std::endl;
     }
+
     std::cout << std::fixed << std::setprecision(3);
     std::cout << "Parallel time: " << parallel_time << std::endl;
     std::cout << "Linear time:   " << linear_time << std::endl;
@@ -181,22 +183,25 @@ void merge(int* array, const int first_subarray_size,
     size --> Array size,
     threads --> Total number of threads involved in parallel algorithm. */
 void parallelQuickSort(int* array, const int size, const int threads) {
-    omp_set_num_threads(threads);
+    tbb::task_scheduler_init init(threads);
     int subarray_size = size / threads;
 
-#pragma omp parallel for schedule(static) shared(array)
-    for (int i = 0; i < threads; i++) {
-        int low = i * subarray_size;
-        int high = 0;
-        // Array may contain remainder. Handle it on last thread
-        if (i == threads - 1 && size % threads) {
-            high = size - 1;
-        } else {
-            high = low + subarray_size - 1;
-        }
+    tbb::parallel_for(
+        tbb::blocked_range<int>(0, threads), /* number of iterations */
+        [=, &array](const tbb::blocked_range<int>& thread_ids) {
+            for (int i = thread_ids.begin(); i < thread_ids.end(); i++) {
+                int low = i * subarray_size;
+                int high = 0;
+                // Array may contain remainder. Handle it on last thread
+                if (i == threads - 1 && size % threads) {
+                    high = size - 1;
+                } else {
+                    high = low + subarray_size - 1;
+                }
 
-        quickSort(array, low, high);
-    }
+                quickSort(array, low, high);
+            }
+        });
 
     int step = 1;  // Distance between merging threads
     for (int i = threads / 2; i > 0; i /= 2) {
@@ -208,19 +213,23 @@ void parallelQuickSort(int* array, const int size, const int threads) {
             second_subarray_size += size % threads;
         }
 
-#pragma omp parallel for schedule(static) \
-    shared(array, first_subarray_size, second_subarray_size, step)
-        for (int j = 0; j < i; j++) {
-            int thread_id = omp_get_thread_num();
-            int first_subarray_start_index =
-                thread_id * subarray_size * step * 2;
-            int second_subarray_start_index =
-                first_subarray_start_index + subarray_size * step;
-            merge(array, first_subarray_size, second_subarray_size,
-                  first_subarray_start_index, second_subarray_start_index);
-        }
+        tbb::parallel_for(
+            tbb::blocked_range<int>(0, i),
+            [=, &array](const tbb::blocked_range<int>& thread_ids) {
+                for (int j = thread_ids.begin(); j < thread_ids.end(); j++) {
+                    int first_subarray_start_index =
+                        j * subarray_size * step * 2;
+                    int second_subarray_start_index =
+                        first_subarray_start_index + subarray_size * step;
+                    merge(array, first_subarray_size, second_subarray_size,
+                          first_subarray_start_index,
+                          second_subarray_start_index);
+                }
+            });
         step *= 2;
     }
+
+    init.terminate();
 }
 
 /* Compare array sorted by parallelQuickSort() to
