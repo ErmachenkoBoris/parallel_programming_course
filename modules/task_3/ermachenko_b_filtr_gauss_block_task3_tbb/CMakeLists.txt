@@ -1,9 +1,17 @@
 set(PROJECT_NAME "ermachenko_b_filter_gauss_block_task3_tbb")
 
-if ( USE_OMP )
+if ( USE_TBB )
     project( ${PROJECT_NAME} )
+
     message( STATUS "-- " ${PROJECT_NAME} )
     add_executable( ${PROJECT_NAME} main.cpp )
-else( USE_OMP )
+
+    if( WIN32 )
+        target_link_libraries(${PROJECT_NAME} ${TBB_IMPORTED_TARGETS})
+    else( WIN32 )
+        target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARIES})
+    endif( WIN32 )
+else( USE_TBB )
     message( STATUS "-- ${PROJECT_NAME} - NOT BUILD!"  )
-endif( USE_OMP )
+endif( USE_TBB )
+
