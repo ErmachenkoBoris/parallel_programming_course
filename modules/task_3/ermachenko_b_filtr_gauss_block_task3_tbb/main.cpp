@@ -127,19 +127,21 @@ double** ParallelFilterGaussTBB(double** arrImage,
                     for (int i = -n / 2; i < n / 2; i++) {
                         for (int j = -n / 2; j < n / 2; j++) {
                             kSum += w[i + n / 2][j + n / 2];
-							if ((i + yi) >= 0 && (i + yi) < height
-								&& (j + xj) >= 0 && (j + xj) < width)
+                            if ((i + yi) >= 0 && (i + yi) < height
+                                && (j + xj) >= 0 && (j + xj) < width) {
                                 color += arrImage[static_cast<int>(i + yi)][static_cast<int>(j + xj)]
                                 * w[i + n / 2][j + n / 2];
+                            }
                         }
                     }
                     if (kSum <= 0) kSum = 1;
                     color /= kSum;
                     if (color < 0) color = 0;
                     if (color > 255) color = 255;
-					if ((yi) >= 0 && (yi) < height && (xj) >= 0 && (xj) < width)
+                    if ((yi) >= 0 && (yi) < height && (xj) >= 0 && (xj) < width) {
                     new_arrImage[static_cast<int>(yi)][static_cast<int>(xj)]
                         = color;
+                    }
                 }
             }
         });
@@ -186,9 +188,9 @@ int main() {
     printf("Time parallel TBB:  %.4lf \n", (end - start).seconds());
     // printf("Koef :  %.4lf \n", tmp / (end - start).seconds());
      ShowArr(arrImage, width, height);
-     printf("\n");
-    ShowArr(new_arrImage_Liner, width,height);
-     printf("\n");
+     printf("Liner:\n");
+     ShowArr(new_arrImage_Liner, width,height);
+     printf("TBB\n");
     // ShowArr(new_arrImage_Parallel, width, height);
     // printf(" \n");
      ShowArr(new_arrImage_Parallel_TBB, width, height);
