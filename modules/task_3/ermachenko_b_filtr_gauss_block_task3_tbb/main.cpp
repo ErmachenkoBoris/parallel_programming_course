@@ -162,7 +162,6 @@ void ShowArr(double** arr, int width, int height) {
     }
 }
 int main() {
-    double tStart, tEnd;
     int height = 5000;
     int width = 5000;
     double** arrImage = getImage(width, height);
