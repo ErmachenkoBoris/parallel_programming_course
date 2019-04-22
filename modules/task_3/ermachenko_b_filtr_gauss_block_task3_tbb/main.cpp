@@ -1,6 +1,5 @@
 // Copyright Ermachenko Boris 2019
 // 1
-#include <omp.h>
 #include <math.h>
 #include <tbb/tbb.h>
 #include <iostream>
@@ -168,14 +167,13 @@ int main() {
     int width = 5000;
     double** arrImage = getImage(width, height);
     double** new_arrImage_Liner = getNewArr(width, height);
-    omp_set_num_threads(THREADS);
     // liner
-    tStart = omp_get_wtime();
+    tbb::tick_count tStart = tbb::tick_count::now();
     new_arrImage_Liner = LinierFilterGauss(arrImage,
         new_arrImage_Liner, width, height);
-    tEnd = omp_get_wtime();
-    float tmp = tEnd - tStart;
-    printf("Time linier :  %.4lf \n", tEnd - tStart);
+    tbb::tick_count tEnd = tbb::tick_count::now();
+    float tmp = (tEnd - tStart).seconds();
+    printf("Time linier :  %.4lf \n", (tEnd - tStart).seconds());
     tbb::task_scheduler_init init(tbb::task_scheduler_init::deferred);
     init.initialize(THREADS);
     double** new_arrImage_Parallel_TBB = getNewArr(width, height);
