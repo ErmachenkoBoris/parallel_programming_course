@@ -119,7 +119,7 @@ double** ParallelFilterGaussTBB(double** arrImage,
     int* lengthY = arrayLengthBlocksY(height);
     tbb::parallel_for(tbb::blocked_range2d<int>(0, height, lengthY[0], 0, width, lengthX[0]),
         [&](const tbb::blocked_range2d<int, int>& r) {
-            printf("1 \n");
+            // printf("1 \n");
             for (int yi = r.rows().begin()+n/2; yi < r.rows().end()-n / 2; yi++) {
                 for (int xj = r.cols().begin() + n / 2; xj < r.cols().end() - n / 2; xj++) {
                     double color = 0;
