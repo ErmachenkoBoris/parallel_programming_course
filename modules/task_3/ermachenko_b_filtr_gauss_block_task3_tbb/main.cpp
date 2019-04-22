@@ -171,7 +171,7 @@ int main() {
     new_arrImage_Liner = LinierFilterGauss(arrImage,
         new_arrImage_Liner, width, height);
     tbb::tick_count tEnd = tbb::tick_count::now();
-    float tmp = (tEnd - tStart).seconds();
+    // float tmp = (tEnd - tStart).seconds();
     printf("Time linier :  %.4lf \n", (tEnd - tStart).seconds());
     tbb::task_scheduler_init init(tbb::task_scheduler_init::deferred);
     init.initialize(THREADS);
@@ -181,7 +181,7 @@ int main() {
         new_arrImage_Parallel_TBB, width, height);
     tbb::tick_count end = tbb::tick_count::now();
     printf("Time parallel TBB:  %.4lf \n", (end - start).seconds());
-    printf("Koef :  %.4lf \n", tmp / (end - start).seconds());
+    // printf("Koef :  %.4lf \n", tmp / (end - start).seconds());
     // ShowArr(arrImage, width, height);
     // printf("\n");
     // ShowArr(new_arrImage_Liner, width,height);
