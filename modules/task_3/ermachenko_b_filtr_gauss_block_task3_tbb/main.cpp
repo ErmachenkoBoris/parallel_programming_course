@@ -58,7 +58,7 @@ double** LinierFilterGauss(double** arrImage, double** new_arrImage,
     return new_arrImage;
 }
 void getBlockNum(int throwds) {
-    int tmp = (int)sqrt(throwds);
+    int tmp = static_cast<int>sqrt(throwds);
     while (throwds % tmp != 0) {
         tmp--;
     }
