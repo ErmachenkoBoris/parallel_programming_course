@@ -120,13 +120,15 @@ double** ParallelFilterGaussTBB(double** arrImage,
     tbb::parallel_for(tbb::blocked_range2d<int>(0, height, lengthY[0], 0, width, lengthX[0]),
         [&](const tbb::blocked_range2d<int, int>& r) {
             // printf("1 \n");
-            for (int yi = r.rows().begin()+n/2; yi < r.rows().end()-n / 2; yi++) {
-                for (int xj = r.cols().begin() + n / 2; xj < r.cols().end() - n / 2; xj++) {
+            for (int yi = r.rows().begin(); yi < r.rows().end(); yi++) {
+                for (int xj = r.cols().begin(); xj < r.cols().end(); xj++) {
                     double color = 0;
                     double kSum = 0;
                     for (int i = -n / 2; i < n / 2; i++) {
                         for (int j = -n / 2; j < n / 2; j++) {
                             kSum += w[i + n / 2][j + n / 2];
+							if ((i + yi) >= 0 && (i + yi) < height
+								&& (j + xj) >= 0 && (j + xj) < width)
                                 color += arrImage[static_cast<int>(i + yi)][static_cast<int>(j + xj)]
                                 * w[i + n / 2][j + n / 2];
                         }
@@ -135,6 +137,7 @@ double** ParallelFilterGaussTBB(double** arrImage,
                     color /= kSum;
                     if (color < 0) color = 0;
                     if (color > 255) color = 255;
+					if ((yi) >= 0 && (yi) < height && (xj) >= 0 && (xj) < width)
                     new_arrImage[static_cast<int>(yi)][static_cast<int>(xj)]
                         = color;
                 }
@@ -162,8 +165,8 @@ void ShowArr(double** arr, int width, int height) {
     }
 }
 int main() {
-    int height = 5000;
-    int width = 5000;
+    int height = 10;
+    int width = 20;
     double** arrImage = getImage(width, height);
     double** new_arrImage_Liner = getNewArr(width, height);
     // liner
@@ -182,12 +185,12 @@ int main() {
     tbb::tick_count end = tbb::tick_count::now();
     printf("Time parallel TBB:  %.4lf \n", (end - start).seconds());
     // printf("Koef :  %.4lf \n", tmp / (end - start).seconds());
-    // ShowArr(arrImage, width, height);
-    // printf("\n");
-    // ShowArr(new_arrImage_Liner, width,height);
-    // printf("\n");
+     ShowArr(arrImage, width, height);
+     printf("\n");
+    ShowArr(new_arrImage_Liner, width,height);
+     printf("\n");
     // ShowArr(new_arrImage_Parallel, width, height);
     // printf(" \n");
-    // ShowArr(new_arrImage_Parallel_TBB, width, height);
+     ShowArr(new_arrImage_Parallel_TBB, width, height);
     return 0;
 }
