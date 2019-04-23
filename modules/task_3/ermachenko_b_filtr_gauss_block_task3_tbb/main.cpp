@@ -189,7 +189,7 @@ int main() {
     // printf("Koef :  %.4lf \n", tmp / (end - start).seconds());
      ShowArr(arrImage, width, height);
      printf("Liner:\n");
-     ShowArr(new_arrImage_Liner, width,height);
+     ShowArr(new_arrImage_Liner, width, height);
      printf("TBB\n");
     // ShowArr(new_arrImage_Parallel, width, height);
     // printf(" \n");
