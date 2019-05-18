@@ -2,7 +2,6 @@
 #include <math.h>
 #include <ctime>
 #include <iostream>
-// #pragma comment(linker, "/HEAP:8000000")
 // 1
 const double PI = 3.1415;
 double** getNewArr(int width, int height) {
@@ -51,7 +50,7 @@ double** FilterGauss(double** arrImage, double** new_arrImage, int width, int he
 }
 
 double** getImage(int width, int height) {
-    srand((unsigned int)time(0)); 
+    srand((unsigned int)time(0));
     double** arrImage = getNewArr(width, height);
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
