@@ -2,14 +2,13 @@
 
 #include <tbb/tbb.h>
 
-#include <cfloat>
 #include <functional>
 #include <iostream>
 #include <random>
 #include <utility>
 #include <vector>
 
-#define DEFAULT_NPOINTS 100000
+#define DEFAULT_NPOINTS 1000000
 
 // Ellipsoid options
 #define ELLPS_A 1.0
@@ -30,28 +29,44 @@ double ellipsoid(const std::vector<double>& args) {
                 + pow(args[2] / ELLPS_C, 2);
 }
 
-double integrateByMonteCarlo(
-        std::function<double(const std::vector<double>&)> func,
-        std::vector<std::pair<double, double> > limits, int nPoints) {
-    int dimension = limits.size();
-    std::vector<std::uniform_real_distribution<> > distrs;
-    distrs.reserve(dimension);
+std::vector<std::vector<double> > generateRandomPointsByArea(
+        int nPoints, const std::vector<std::pair<double, double> >& limits) {
+    int nDimensions = limits.size();
 
-    double measure = 1.0;
-    for (int i = 0; i < dimension; i++) {
-        measure *= limits[i].second - limits[i].first;
+    std::vector<std::uniform_real_distribution<> > distrs;
+    distrs.reserve(nDimensions);
+    for (int i = 0; i < nDimensions; i++) {
         distrs.emplace_back(limits[i].first, limits[i].second);
     }
 
-    int nPointsInEllipsoid = 0;
-    std::vector<double> args(dimension);
     std::random_device r;
     std::default_random_engine generator(r());
+    std::vector<std::vector<double> > points(nPoints, std::vector<double>(nDimensions));
     for (int i = 0; i < nPoints; i++) {
-        for (int j = 0; j < dimension; j++)
-            args[j] = distrs[j](generator);
-        double value = func(args);
+        for (int j = 0; j < nDimensions; j++) {
+            points[i][j] = distrs[j](generator);
+        }
+    }
+
+    return points;
+}
+
+double integrateByMonteCarlo(
+        std::function<double(const std::vector<double>&)> func,
+        const std::vector<std::pair<double, double> >& limits,
+        const std::vector<std::vector<double> >& points) {
+    int nDimensions = limits.size();
+    int nPoints = points.size();
+
+    int nPointsInEllipsoid = 0;
+    for (int i = 0; i < nPoints; i++) {
+        double value = func(points[i]);
         if (value <= 0) nPointsInEllipsoid++;
+    }
+
+    double measure = 1.0;
+    for (int i = 0; i < nDimensions; i++) {
+        measure *= limits[i].second - limits[i].first;
     }
 
     double hitProbability = static_cast<double>(nPointsInEllipsoid) / nPoints;
@@ -59,34 +74,28 @@ double integrateByMonteCarlo(
 }
 
 double integrateByMonteCarloParallel(
-        std::function<double(std::vector<double>&)> func,
-        std::vector<std::pair<double, double> > limits, int nPoints) {
-    int dimension = limits.size();
-    std::vector<std::uniform_real_distribution<> > distrs;
-    distrs.reserve(dimension);
-
-    double measure = 1.0;
-    for (int i = 0; i < dimension; i++) {
-        measure *= limits[i].second - limits[i].first;
-        distrs.emplace_back(limits[i].first, limits[i].second);
-    }
+        std::function<double(const std::vector<double>&)> func,
+        const std::vector<std::pair<double, double> >& limits,
+        const std::vector<std::vector<double> >& points) {
+    int nDimensions = limits.size();
+    int nPoints = points.size();
 
     int nPointsInEllipsoid = tbb::parallel_reduce(
         tbb::blocked_range<size_t>(0, nPoints), 0,
         [&] (const tbb::blocked_range<size_t>& r, int anotherValue) -> int {
-            int nPointsInEllipsoid = anotherValue;
-            std::vector<double> args(dimension);
             size_t begin = r.begin(), end = r.end();
-            std::default_random_engine generator(begin);
             for (size_t i = begin; i != end; i++) {
-                for (int j = 0; j < dimension; j++)
-                    args[j] = distrs[j](generator);
-                double value = func(args);
-                if (value <= 0) nPointsInEllipsoid++;
+                double value = func(points[i]);
+                if (value <= 0) anotherValue++;
             }
-            return nPointsInEllipsoid;
+            return anotherValue;
         },
         std::plus<int>());
+
+    double measure = 1.0;
+    for (int i = 0; i < nDimensions; i++) {
+        measure *= limits[i].second - limits[i].first;
+    }
 
     double hitProbability = static_cast<double>(nPointsInEllipsoid) / nPoints;
     return measure * hitProbability;
@@ -95,16 +104,17 @@ double integrateByMonteCarloParallel(
 int main(int argc, char *argv[]) {
     int nPoints = (argc > 1) ? atoi(argv[1]) : DEFAULT_NPOINTS;
 
+    std::vector<std::pair<double, double> > limits = { { X1, X2 }, { Y1, Y2 }, { Z1, Z2 } };
+    auto points = generateRandomPointsByArea(nPoints, limits);
+
     // Sequential
     tbb::tick_count t1 = tbb::tick_count::now();
-    double seqResult = integrateByMonteCarlo(
-        ellipsoid, { { X1, X2 }, { Y1, Y2 }, { Z1, Z2 } }, nPoints);
+    double seqResult = integrateByMonteCarlo(ellipsoid, limits, points);
     double seqTime = (tbb::tick_count::now() - t1).seconds();
 
     // Parallel
     t1 = tbb::tick_count::now();
-    double parResult = integrateByMonteCarloParallel(
-        ellipsoid, { { X1, X2 }, { Y1, Y2 }, { Z1, Z2 } }, nPoints);
+    double parResult = integrateByMonteCarloParallel(ellipsoid, limits, points);
     double parTime = (tbb::tick_count::now() - t1).seconds();
 
     double realRes = 4.0 / 3.0 * std::acos(-1) * ELLPS_A * ELLPS_B * ELLPS_C;
